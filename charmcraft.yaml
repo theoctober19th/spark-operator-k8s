@@ -1,0 +1,77 @@
+# Copyright 2026 Canonical Data Platform
+# See LICENSE file for licensing details.
+
+type: charm
+name: spark-operator-k8s
+title: Kubeflow Spark Operator K8s
+summary: Charmed Kubeflow Spark Operator, to run Spark applications declaratively on Kubernetes.
+description: |
+  Charm for the Kubeflow Spark Operator, a Kubernetes operator that runs Apache Spark
+  applications described by SparkApplication, ScheduledSparkApplication and SparkConnect
+  custom resources.
+
+  The charm installs the operator CRDs, runs the operator controller, and prepares a
+  service account that Spark driver pods can use in the namespaces the operator watches.
+
+  This is a proof of concept: the mutating/validating admission webhook is not deployed yet.
+
+base: ubuntu@24.04
+platforms:
+  amd64:
+  arm64:
+
+assumes:
+  - juju >= 3.6
+  - k8s-api
+
+charm-user: non-root
+
+parts:
+  charm:
+    plugin: uv
+    source: .
+    build-snaps:
+      - astral-uv
+
+config:
+  options:
+    log-level:
+      description: |
+        Log level of the Spark Operator controller.
+
+        Acceptable values are: "debug", "info" and "error".
+      default: "info"
+      type: string
+    controller-threads:
+      description: |
+        Number of workers that reconcile SparkApplication objects concurrently.
+      default: 10
+      type: int
+    job-namespaces:
+      description: |
+        Comma-separated list of namespaces in which the operator manages Spark applications.
+        A "spark" service account for driver pods is created in each of them, so they must
+        already exist.
+
+        An empty value (the default) means the namespace the charm is deployed to. The special
+        value "*" makes the operator watch the whole cluster; in that case the "spark" service
+        account is only created in the namespace the charm is deployed to.
+      default: ""
+      type: string
+
+actions:
+  restart:
+    description: Restart the Spark Operator controller in this unit.
+
+containers:
+  controller:
+    resource: controller-image
+    uid: 185
+    gid: 185
+
+resources:
+  controller-image:
+    type: oci-image
+    description: OCI image of the Kubeflow Spark Operator, which provides the controller binary.
+    # Keep in line with the CRDs vendored by scripts/update-crds.sh.
+    upstream-source: ghcr.io/kubeflow/spark-operator/controller:2.6.0
