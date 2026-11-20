@@ -1,0 +1,24 @@
+# Spark Pi on the Charmed Apache Spark image, with the object storage settings of the Spark
+# Integration Hub. The manifest sets no S3 property and no service account: the operator uses the
+# default driver service account that the Hub granted, and the Spark8tSubmitter adds the Hub's
+# properties (event log directory, S3A endpoint and credentials, ...) when it submits the job.
+# Adjust `metadata.namespace` to the namespace of the Juju model.
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: spark-pi-s3
+  namespace: spark-hub-poc
+spec:
+  type: Scala
+  mode: cluster
+  image: ghcr.io/canonical/charmed-spark:3.4.4-22.04_edge
+  sparkVersion: "3.4.4"
+  mainClass: org.apache.spark.examples.SparkPi
+  mainApplicationFile: local:///opt/spark/examples/jars/spark-examples_2.12-3.4.4.jar
+  driver:
+    cores: 1
+    memory: 512m
+  executor:
+    instances: 2
+    cores: 1
+    memory: 512m

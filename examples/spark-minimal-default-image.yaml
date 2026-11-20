@@ -1,0 +1,18 @@
+# Same as spark-minimal.yaml, without `image`: the image comes from the `spark-image` option of
+# the Spark Integration Hub charm (juju config hub spark-image=<image>), which the Spark8tSubmitter
+# passes to spark-submit as `spark.kubernetes.container.image`. Without that option, Spark fails
+# with "Must specify the driver container image".
+# Adjust `metadata.namespace` to the namespace of the Juju model.
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: spark-pi
+  namespace: spark-hub-poc
+spec:
+  type: Scala
+  mode: cluster
+  sparkVersion: "3.4.4"
+  mainClass: org.apache.spark.examples.SparkPi
+  mainApplicationFile: local:///opt/spark/examples/jars/spark-examples_2.12-3.4.4.jar
+  driver: {}
+  executor: {}

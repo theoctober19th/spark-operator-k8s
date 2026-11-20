@@ -1,0 +1,18 @@
+# The smallest SparkApplication that works with the charm related to the Spark Integration Hub.
+# No service account and no Spark property is set: the operator fills in the default driver service
+# account that the Hub granted, and the Spark8tSubmitter adds the Hub's properties at submission.
+# Adjust `metadata.namespace` to the namespace of the Juju model.
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: spark-pi
+  namespace: spark-hub-poc
+spec:
+  type: Scala
+  mode: cluster
+  image: ghcr.io/canonical/charmed-spark:3.4.4-22.04_edge
+  sparkVersion: "3.4.4"
+  mainClass: org.apache.spark.examples.SparkPi
+  mainApplicationFile: local:///opt/spark/examples/jars/spark-examples_2.12-3.4.4.jar
+  driver: {}
+  executor: {}

@@ -60,7 +60,6 @@ def test_leader_installs_resources_and_starts_controller(ctx, k8s):
     state = ctx.run(ctx.on.pebble_ready(container), make_state(container))
 
     k8s.apply_crds.assert_called_once_with()
-    k8s.apply_job_rbac.assert_called_once_with([MODEL])
     command = service_command(state)
     assert command.startswith(f"{spark_operator.BINARY} controller start ")
     assert f"--namespaces={MODEL}" in command
@@ -78,7 +77,6 @@ def test_non_leader_only_runs_the_controller(ctx, k8s):
     state = ctx.run(ctx.on.pebble_ready(container), make_state(container, leader=False))
 
     k8s.apply_crds.assert_not_called()
-    k8s.apply_job_rbac.assert_not_called()
     assert spark_operator.SERVICE_NAME in state.get_container("controller").plan.services
 
 
@@ -118,20 +116,19 @@ def test_blocked_on_invalid_log_level(ctx, k8s):
 
 
 @pytest.mark.parametrize(
-    ("job_namespaces", "flag", "rbac_namespaces"),
+    ("job_namespaces", "flag"),
     [
-        ("analytics, etl", "--namespaces=analytics,etl", ["analytics", "etl"]),
-        ("*", None, [MODEL]),
+        ("analytics, etl", "--namespaces=analytics,etl"),
+        ("*", None),
     ],
 )
-def test_job_namespaces(ctx, k8s, job_namespaces, flag, rbac_namespaces):
+def test_job_namespaces(ctx, k8s, job_namespaces, flag):
     container = make_container()
     state = ctx.run(
         ctx.on.pebble_ready(container),
         make_state(container, config={"job-namespaces": job_namespaces}),
     )
 
-    k8s.apply_job_rbac.assert_called_once_with(rbac_namespaces)
     command = service_command(state)
     if flag:
         assert flag in command
@@ -139,16 +136,15 @@ def test_job_namespaces(ctx, k8s, job_namespaces, flag, rbac_namespaces):
         assert "--namespaces" not in command
 
 
-def test_remove_application_deletes_driver_resources(ctx, k8s):
-    ctx.run(ctx.on.remove(), make_state(planned_units=0))
+@pytest.mark.parametrize("enabled", [True, False])
+def test_spark8t_submitter(ctx, k8s, enabled):
+    container = make_container()
+    state = ctx.run(
+        ctx.on.pebble_ready(container),
+        make_state(container, config={"spark8t-submitter": enabled}),
+    )
 
-    k8s.remove_job_rbac.assert_called_once_with([MODEL])
-
-
-def test_scale_down_keeps_driver_resources(ctx, k8s):
-    ctx.run(ctx.on.remove(), make_state(planned_units=1))
-
-    k8s.remove_job_rbac.assert_not_called()
+    assert ("--feature-gates=Spark8tSubmitter=true" in service_command(state)) is enabled
 
 
 def test_parse_job_namespaces():

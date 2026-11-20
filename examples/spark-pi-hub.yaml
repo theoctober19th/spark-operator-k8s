@@ -1,0 +1,22 @@
+# Spark Pi without a driver service account: the operator uses the one that the Spark
+# Integration Hub granted to the charm (see the `service-account` option of the charm).
+# Adjust `metadata.namespace` to the namespace of the Juju model.
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: spark-pi
+  namespace: spark-hub-poc
+spec:
+  type: Scala
+  mode: cluster
+  image: docker.io/apache/spark:4.2.1
+  sparkVersion: "4.2.1"
+  mainClass: org.apache.spark.examples.SparkPi
+  mainApplicationFile: local:///opt/spark/examples/jars/spark-examples.jar
+  driver:
+    cores: 1
+    memory: 512m
+  executor:
+    instances: 2
+    cores: 1
+    memory: 512m

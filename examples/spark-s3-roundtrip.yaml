@@ -1,0 +1,22 @@
+# PySpark job that writes a Parquet dataset to the object storage configured through the Spark
+# Integration Hub and reads it back. The script is stored in the bucket itself. As for
+# spark-pi-s3.yaml, no S3 property and no service account are set in the manifest.
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: s3-roundtrip
+  namespace: spark-hub-poc
+spec:
+  type: Python
+  pythonVersion: "3"
+  mode: cluster
+  image: ghcr.io/canonical/charmed-spark:3.4.4-22.04_edge
+  sparkVersion: "3.4.4"
+  mainApplicationFile: s3a://spark-tutorial/scripts/s3_roundtrip.py
+  driver:
+    cores: 1
+    memory: 512m
+  executor:
+    instances: 2
+    cores: 1
+    memory: 512m

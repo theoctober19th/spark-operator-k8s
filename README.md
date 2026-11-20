@@ -8,11 +8,11 @@ so that Spark applications can be run declaratively with `SparkApplication` cust
 - Runs the upstream controller (`spark-operator controller start`) from the upstream OCI image,
   under Pebble, with leader election so that the application can be scaled.
 - Installs the operator CRDs (vendored in `src/manifests/crds`, see `scripts/update-crds.sh`).
-- Creates a `spark` service account with the permissions a Spark driver needs, in every namespace
-  the operator watches.
 
 ## Not in scope yet
 
+- Service accounts for Spark drivers. Create them yourself in the watched namespaces (see
+  `examples/spark-rbac.yaml`).
 - The admission webhook. Features that need it (mounting Secrets and ConfigMaps or volumes,
   affinity, tolerations, sidecars, ...) do not work yet.
 - Least-privilege RBAC for the controller: the charm relies on `juju deploy --trust`.
@@ -24,7 +24,8 @@ so that Spark applications can be run declaratively with `SparkApplication` cust
 charmcraft pack
 juju deploy ./spark-operator-k8s_amd64.charm --trust \
   --resource controller-image=ghcr.io/kubeflow/spark-operator/controller:2.6.0
-kubectl apply -f examples/spark-pi.yaml   # edit metadata.namespace to the Juju model name
+kubectl apply -f examples/spark-rbac.yaml   # edit the namespace to the Juju model name
+kubectl apply -f examples/spark-pi.yaml     # likewise
 kubectl -n <model> get sparkapplication spark-pi
 ```
 

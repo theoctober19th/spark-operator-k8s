@@ -1,0 +1,33 @@
+# Service account that Spark driver pods use to create executor pods and their headless service.
+# The charm does not create it: apply it in every namespace the operator watches
+# (see the `job-namespaces` config option), and reference it from
+# `.spec.driver.serviceAccount` in your SparkApplication.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spark
+  namespace: spark-operator-poc
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: spark-driver
+  namespace: spark-operator-poc
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "configmaps", "persistentvolumeclaims", "services"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete", "deletecollection"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: spark-driver
+  namespace: spark-operator-poc
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: spark-driver
+subjects:
+  - kind: ServiceAccount
+    name: spark
+    namespace: spark-operator-poc

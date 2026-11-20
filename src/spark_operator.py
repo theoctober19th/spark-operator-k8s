@@ -41,6 +41,8 @@ def build_command(
     namespaces: list[str] | None,
     log_level: str,
     controller_threads: int,
+    spark8t_submitter: bool = False,
+    default_service_account: str | None = None,
 ) -> str:
     """Return the command line that starts the controller."""
     args = [
@@ -56,6 +58,10 @@ def build_command(
     ]
     if namespaces is not None:
         args.append(f"--namespaces={','.join(namespaces)}")
+    if spark8t_submitter:
+        args.append("--feature-gates=Spark8tSubmitter=true")
+    if default_service_account:
+        args.append(f"--default-service-account={default_service_account}")
     return " ".join(args)
 
 
